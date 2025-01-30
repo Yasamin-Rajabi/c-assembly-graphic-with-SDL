@@ -1,7 +1,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_timer.h>
-#include "HandelGame.h"
+//#include "HandelGame.h"
 using namespace std;
 
 const double PI = 3.141592; 
@@ -76,8 +76,7 @@ int main(int argc, char *argv[])
 
 
 	SDL_Event event;
-	h(event);
-	/*while (!close) {
+	while (!close) {
 		SDL_Event event;
 
 		// Events management
@@ -159,24 +158,17 @@ int main(int argc, char *argv[])
 		SDL_RenderClear(rend);
 		SDL_RenderCopy(rend, tex, NULL, &ball);
 
-		// triggers the double buffers
-		// for multiple rendering
+		// triggers the double buffers for multiple rendering
 		SDL_RenderPresent(rend);
 
 		// calculates to 60 fps
 		SDL_Delay(100);
-	}*/
+	}
 
-	// destroy texture
-	SDL_DestroyTexture(tex);
-
-	// destroy renderer
-	SDL_DestroyRenderer(rend);
-
-	// destroy window
-	SDL_DestroyWindow(win);
 	
-	// close SDL
+	SDL_DestroyTexture(tex);
+	SDL_DestroyRenderer(rend);
+	SDL_DestroyWindow(win);
 	SDL_Quit();
 
 	return 0;
