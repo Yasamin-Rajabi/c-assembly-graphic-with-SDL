@@ -29,10 +29,13 @@ int main(int argc, char *argv[])
 	bool shoot = 0;
 
 	int move_mod = 0; //0 simple //1 mohadab //2 sinosi
-	int speed = 30;
-	int degree = 45;
+	int speed = 35;
+	int degree0 = 6;
+	int degree = degree0;
 
+	set_degree0(degree0);
 	set_move_variables(move_mod, speed, degree);
+
 
 	SDL_Event event;
 	while (!close) {
@@ -68,7 +71,7 @@ int main(int argc, char *argv[])
 							if(is_click_on_move_type(mouseX, mouseY, i))
 								move_mod = i/2;
 
-						speed = max(speed, 0);
+						speed = max(speed, 1);
 						degree = max(degree, -80);
 						//printf("speed = %d   degree = %d\n", speed, degree);
 						
@@ -92,8 +95,8 @@ int main(int argc, char *argv[])
 		}
 
 		if(shoot){
-			if(shoot_ball())
-				shoot = false, degree = 45;
+			if(shoot_ball(0))
+				shoot = false, degree = degree0;
 		}
 		
 

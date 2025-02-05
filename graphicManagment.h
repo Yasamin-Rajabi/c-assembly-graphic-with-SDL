@@ -12,7 +12,8 @@ void render_present(SDL_Renderer*);
 void quit_game(SDL_Window*, SDL_Renderer*);
 
 void set_move_variables(int, int, int);
-bool shoot_ball();
+void set_degree0(int);
+bool shoot_ball(bool);
 
 #endif
 

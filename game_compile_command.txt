@@ -1,0 +1,3 @@
+nasm -f elf64 asm.s -o output1.o && g++ -c main.cpp -o output2.o && g++ -c graphicManagment.cpp -o output3.o -I/usr/include/SDL2 && g++ output1.o output2.o output3.o -o exe -no-pie `sdl2-config --cflags --libs` -lSDL2_image -lSDL2 -lSDL2_ttf
+
+

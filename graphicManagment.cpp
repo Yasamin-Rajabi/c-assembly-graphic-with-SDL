@@ -5,17 +5,25 @@
 #include <SDL_ttf.h>
 using namespace std;
 
+extern "C" double get_asm_x(double ,double, double);
+extern "C" double get_asm_y(double, double, double);
+
 const double PI = 3.141592; 
 const double PI_DEGREE = 180;
 
 const int window_width = 1200;
 const int window_height = 800;
 
-int ballX0;
-int ballY0;
+bool door_move = true; // true -> up false -> down
+int delta_door_move = 10;
+int goal_display;
+
+double ballX0;
+double ballY0;
 int move_mod;
 int speed;
 int degree;
+int degree0;
 int angle;
 
 SDL_Rect ball;
@@ -23,6 +31,12 @@ SDL_Texture* ball_tex;
 
 SDL_Rect line;
 SDL_Texture* line_tex;
+
+SDL_Rect door;
+SDL_Texture* door_tex;
+
+SDL_Rect goal;
+SDL_Texture* goal_tex;
 
 SDL_Rect Speed_number;
 SDL_Texture* Speed_number_tex;
@@ -108,6 +122,37 @@ void create_line(SDL_Renderer* rend){
     line.x = 0;
     line.y = 30;
 }
+
+void create_door(SDL_Renderer* rend){
+
+    SDL_Surface* door_surface = IMG_Load("pictures/door.png");
+	
+    door_tex = SDL_CreateTextureFromSurface(rend, door_surface);
+    SDL_FreeSurface(door_surface);
+    SDL_QueryTexture(door_tex, NULL, NULL, &door.w, &door.h);
+
+	door.w /= 3;
+    door.h = (window_height - line.y) / 4;
+
+    door.x = window_width - door.w / 2 - 20;
+    door.y = (window_height - door.h) / 2;
+}
+
+void create_goal(SDL_Renderer* rend){
+
+    SDL_Surface* goal_surface = IMG_Load("pictures/goal.png");
+
+    goal_tex = SDL_CreateTextureFromSurface(rend, goal_surface);
+    SDL_FreeSurface(goal_surface);
+    SDL_QueryTexture(goal_tex, NULL, NULL, &goal.w, &goal.h);
+
+    goal.w /= 5;
+    goal.h /= 5;
+
+    goal.x = window_width - goal.w / 2 - 50;
+    goal.y = 15;
+}
+
 
 void create_ISpeed(SDL_Renderer* rend){
 
@@ -206,22 +251,16 @@ void create_move_type_layers(SDL_Renderer* rend){
     }
 }
 
+TTF_Font* font;
+SDL_Color color = {110, 0, 128, 255};
+
 void create_Speed_number(SDL_Renderer* rend) {
-    string text = to_string(speed);
-
-	if (TTF_Init() == -1) {
-	    std::cerr << "SDL_ttf could not initialize! Error: " << TTF_GetError() << std::endl;
-    	return;
-	}
-
-	TTF_Font* font = TTF_OpenFont("arial-font/arial.ttf", 48);
 
 	if (!font) {
-    	std::cerr << "Failed to load font: " << TTF_GetError() << std::endl;
-    	return;
-	}
-
-	SDL_Color color = {110, 0, 128, 255};
+        std::cerr << "Failed to load font: " << TTF_GetError() << std::endl;
+        return;
+    }
+    string text = to_string(speed);
 
     SDL_Surface* surface = TTF_RenderText_Solid(font, text.c_str(), color);
     Speed_number_tex = SDL_CreateTextureFromSurface(rend, surface);
@@ -236,22 +275,8 @@ void create_Speed_number(SDL_Renderer* rend) {
 }
 
 void create_Degree_number(SDL_Renderer* rend) {
+
     string text = to_string(degree);
-    
-	if (TTF_Init() == -1) {
-        std::cerr << "SDL_ttf could not initialize! Error: " << TTF_GetError() << std::endl;
-        return;
-    }
-
-    TTF_Font* font = TTF_OpenFont("arial-font/arial.ttf", 48);
-
-    if (!font) {
-        std::cerr << "Failed to load font: " << TTF_GetError() << std::endl;
-        return;
-    }
-
-
-    SDL_Color color = {110, 0, 128, 255};
 
     SDL_Surface* surface = TTF_RenderText_Solid(font, text.c_str(), color);
     Degree_number_tex = SDL_CreateTextureFromSurface(rend, surface);
@@ -271,6 +296,14 @@ void create_objects(SDL_Renderer* rend){
 	create_ball(rend);
 	create_move_type_layers(rend);
 	create_line(rend);
+	create_door(rend);
+	create_goal(rend);
+
+	if (TTF_Init() == -1) {
+        std::cerr << "SDL_ttf could not initialize! Error: " << TTF_GetError() << std::endl;
+        return;
+    }
+	font = TTF_OpenFont("arial-font/arial.ttf", 48);
 
 	create_ISpeed(rend);
 	create_DSpeed(rend);
@@ -284,15 +317,31 @@ void create_objects(SDL_Renderer* rend){
 
 }
 
+SDL_Point ball_center = {ball.w / 2, ball.h / 2};
+
 void render_present(SDL_Renderer* rend){
 	// clears the screen
     SDL_RenderClear(rend);
 	
-	SDL_Point center = {ball.w / 2, ball.h / 2}; 
-	SDL_RenderCopyEx(rend, ball_tex, nullptr, &ball, angle, &center, SDL_FLIP_NONE);
-
-    //SDL_RenderCopy(rend, ball_tex, NULL, &ball);
+	SDL_RenderCopyEx(rend, ball_tex, NULL, &ball, angle, &ball_center, SDL_FLIP_NONE);
     SDL_RenderCopy(rend, line_tex, NULL, &line);
+
+	if(door_move)
+		door.y -= delta_door_move;
+	else
+		door.y += delta_door_move;
+	
+	if(door.y + door.h > window_height)
+		door_move = true;
+	if(door.y < line.y + line.h / 2)
+		door_move = false;
+
+	SDL_RenderCopy(rend, door_tex, NULL, &door);
+
+	if(goal_display > 0){
+		SDL_RenderCopy(rend, goal_tex, NULL, &goal);
+		goal_display--;
+	}
 
     SDL_RenderCopy(rend, ISpeed_tex, NULL, &ISpeed);
     SDL_RenderCopy(rend, DSpeed_tex, NULL, &DSpeed);
@@ -311,9 +360,7 @@ void render_present(SDL_Renderer* rend){
     for(int i = 0;i < 6;i += 2)
     	SDL_RenderCopy(rend, move_type_tex[i + (move_mod == i/2 ? 1 : 0)], NULL, &move_type[i + (move_mod == i/2 ? 1 : 0)]);
         
-    // triggers the double buffers for multiple rendering
    	SDL_RenderPresent(rend);
-
 }
 
 
@@ -321,6 +368,8 @@ void quit_game(SDL_Window* win, SDL_Renderer* rend){
 
 	SDL_DestroyTexture(ball_tex);
 	SDL_DestroyTexture(line_tex);
+	SDL_DestroyTexture(door_tex);
+	SDL_DestroyTexture(goal_tex);
 
 	SDL_DestroyTexture(Speed_number_tex);
 	SDL_DestroyTexture(Speed_layer_tex);
@@ -339,6 +388,9 @@ void quit_game(SDL_Window* win, SDL_Renderer* rend){
 	TTF_Quit();
 }
 
+void set_degree0(int x){
+	degree0 = x;
+}
 
 void set_move_variables(int m, int s, int d){
 	move_mod = m;
@@ -358,44 +410,70 @@ double getY(double degree, double length, double y0){
     return y0 + (sin(getRadians(degree)) * length);
 }
 
-bool shoot_ball(){
+bool shoot_ball(bool asm_mode){
 
 	// check hit
     if (ball.x + ball.w > window_width or ball.x < 0 or ball.y + ball.h > window_height or ball.y < line.y + line.h/2){
+
+		if(ball.x + ball.w > window_width and door.y <= ball.y and ball.y + ball.h <= door.y + door.h)
+			goal_display = 30;
+
 		ball.x = ballX0;
 		ball.y = ballY0;
-		degree = 45;
+		degree = degree0;
 		angle = 0;
 
     	return true;
     }
 
+	
 	angle += 10;
-	// Straight move
-    if(move_mod == 0){
-        ball.x = getX(degree * -1, speed, ball.x);
-        ball.y = getY(degree * -1, speed, ball.y);
-	}
 
 	// Convex move
     if(move_mod == 1){
-		if(degree <= -70)
+		if(degree <= -70 && degree >= -75)
         	degree --;    
 		else
 			degree -= 5;
-
-        degree = max(degree, -80);
-        ball.x = getX(degree * -1, speed, ball.x);
-		ball.y = getY(degree * -1, speed, ball.y);
-	}
+	}    
 
 	// Sinusoidal move
     if(move_mod == 2){
     	degree += 20;
-		degree = degree % 360;
-        ball.x += speed;
-        ball.y = getY(degree * -1, 100, ballY0);
-    }
+	
+		if(degree >= 360)
+			degree -= 360;
+	}
+
+	double ddegree = degree * -1;
+    double dspeed = speed;
+    double ballX = ball.x;
+    double ballY = ball.y;
+	double sad = 100;
+
+	if(move_mod != 2){
+    	if(!asm_mode){
+    		ball.x = getX(degree * -1, speed, ball.x);
+        	ball.y = getY(degree * -1, speed, ball.y);
+
+    	}else{
+        	ball.x = get_asm_x(ddegree, dspeed, ballX);
+        	ball.y = get_asm_y(ddegree, dspeed, ballY);
+    	}
+
+	}else{
+		if(!asm_mode){
+			ball.x += 20;
+            ball.y = getY(degree * -1, 100, ballY0);
+
+        }else{
+			ball.x += 20;
+            ball.y = get_asm_y(ddegree, sad, ballY0);
+
+		}
+	}
+    
+
 	
 	return false;
 }
