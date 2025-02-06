@@ -18,6 +18,8 @@ bool door_move = true; // true -> up false -> down
 int delta_door_move = 10;
 int goal_display;
 
+Uint32 format = SDL_PIXELFORMAT_ARGB8888;
+
 double ballX0;
 double ballY0;
 int move_mod;
@@ -28,9 +30,12 @@ int angle;
 
 SDL_Rect ball;
 SDL_Texture* ball_tex;
+SDL_Surface* ball_surface;
 
 SDL_Rect line;
 SDL_Texture* line_tex;
+SDL_Surface* line_surface;
+Uint8* line_color_array;
 
 SDL_Rect door;
 SDL_Texture* door_tex;
@@ -95,7 +100,7 @@ bool is_click_on_move_type(int mouseX, int mouseY, int layer_type){
 
 void create_ball(SDL_Renderer* rend){
 
-	SDL_Surface* ball_surface = IMG_Load("pictures/ball.png"); // creates a surface to load an image into the main memory
+	ball_surface = IMG_Load("pictures/ball.png"); // creates a surface to load an image into the main memory
     ball_tex = SDL_CreateTextureFromSurface(rend, ball_surface); // loads image to our graphics hardware memory.
     SDL_FreeSurface(ball_surface); //clears main-memory (cause it is in RAM)
     SDL_QueryTexture(ball_tex, NULL, NULL, &ball.w, &ball.h); // connects our texture with dest to control position
@@ -112,15 +117,26 @@ void create_ball(SDL_Renderer* rend){
 
 void create_line(SDL_Renderer* rend){
 
-	SDL_Surface* line_surface = IMG_Load("pictures/line.png");
-    line_tex = SDL_CreateTextureFromSurface(rend, line_surface);
-    SDL_FreeSurface(line_surface);
+	SDL_Surface* surface = IMG_Load("pictures/line.png");
+    line_tex = SDL_CreateTextureFromSurface(rend, surface);
+    SDL_FreeSurface(surface);
     SDL_QueryTexture(line_tex, NULL, NULL, &line.w, &line.h);
 
 	line.w = window_width;
     line.h /= 3;
     line.x = 0;
-    line.y = 30;
+    line.y = 100;
+
+	line_color_array = (Uint8*) malloc(4 * line.w * line.h * sizeof(Uint8));
+
+	SDL_Surface* surface1 = SDL_CreateRGBSurfaceWithFormat(0, line.w, line.h, 32, format);
+
+    if (SDL_RenderReadPixels(rend, &line, format, surface1->pixels, surface1->pitch) != 0){
+        SDL_Log("SDL_RenderReadPixels failed: %s", SDL_GetError());
+    }else{
+        SDL_SaveBMP(surface, "screenshot1.bmp");
+    }
+
 }
 
 void create_door(SDL_Renderer* rend){
@@ -146,11 +162,11 @@ void create_goal(SDL_Renderer* rend){
     SDL_FreeSurface(goal_surface);
     SDL_QueryTexture(goal_tex, NULL, NULL, &goal.w, &goal.h);
 
-    goal.w /= 5;
-    goal.h /= 5;
+    goal.w /= 6;
+    goal.h /= 6;
 
-    goal.x = window_width - goal.w / 2 - 50;
-    goal.y = 15;
+    goal.x = window_width - goal.w - 50;
+    goal.y = 40;
 }
 
 
@@ -317,14 +333,85 @@ void create_objects(SDL_Renderer* rend){
 
 }
 
+const int BytesPerPixel = 4;
+
+
+void get_color_array(SDL_Renderer* rend, SDL_Rect* rect, Uint8* color_array){
+
+	SDL_Surface* surface = SDL_CreateRGBSurfaceWithFormat(0, line.w, line.h, 32, format);
+
+    if (SDL_RenderReadPixels(rend, &line, format, surface->pixels, surface->pitch) != 0){
+    	SDL_Log("SDL_RenderReadPixels failed: %s", SDL_GetError());
+    }else{
+        SDL_SaveBMP(surface, "screenshot2.bmp");
+	}
+
+	for(int x = 0; x < line.w; x++)
+		for(int y = 0; y < line.h; y++){
+
+			Uint8* pixel_base = static_cast<Uint8*>(surface->pixels);
+            Uint8* pixel_address = pixel_base + (y * surface->pitch) + (x * BytesPerPixel);
+            Uint32* pixel_ptr = reinterpret_cast<Uint32*>(pixel_address);
+
+            Uint32 pixel_value;
+            memcpy(&pixel_value, pixel_ptr, surface -> format -> BytesPerPixel);
+			
+			SDL_GetRGBA(pixel_value, surface->format,   &color_array[BytesPerPixel * (y * line.w + x)],      //R
+														&color_array[BytesPerPixel * (y * line.w + x) + 1],  //G
+														&color_array[BytesPerPixel * (y * line.w + x) + 2],  //B
+														&color_array[BytesPerPixel * (y * line.w + x) + 3]); //A
+		}
+	
+}
+
+
+void local_RenderCopy(SDL_Renderer* rend, SDL_Rect rect, Uint8* color_array){
+    // Draw a point at coordinate (100, 100)
+	for(int i = rect.x, x = 0; i < rect.x + rect.w; i++, x++)
+		for(int j = rect.y, y = 0; j < rect.y + rect.h; j++, y++){
+
+			Uint8 r = color_array[BytesPerPixel * (y * rect.w + x)];
+			Uint8 g = color_array[BytesPerPixel * (y * rect.w + x) + 1];
+			Uint8 b = color_array[BytesPerPixel * (y * rect.w + x) + 2];
+			Uint8 a = color_array[BytesPerPixel * (y * rect.w + x) + 3];
+
+    		// Extract RGBA components
+			SDL_SetRenderDrawColor(rend, r, g, b, a); // r g b a
+
+			if((r && r != 0) or (g && g != 0) or (b && b != 0))
+    			SDL_RenderDrawPoint(rend, i, j);
+			
+		}
+
+	SDL_SetRenderDrawColor(rend, 0, 0, 0, 255);
+
+}
+
+void display_object(SDL_Renderer* rend, SDL_Texture* texture, SDL_Rect rect, Uint8* color_array){
+	//if(!asm_mod)
+	//	SDL_RenderCopy(rend, texture, Null, &rect);
+	//else
+	//	local_RenderCopy(rend, rect, color_array);
+}
+
+bool test_t = false;
+
 SDL_Point ball_center = {ball.w / 2, ball.h / 2};
 
 void render_present(SDL_Renderer* rend){
+	if(test_t)
+		get_color_array(rend, &line, line_color_array);
+
 	// clears the screen
     SDL_RenderClear(rend);
-	
+
 	SDL_RenderCopyEx(rend, ball_tex, NULL, &ball, angle, &ball_center, SDL_FLIP_NONE);
-    SDL_RenderCopy(rend, line_tex, NULL, &line);
+
+	if(!test_t){
+		SDL_RenderCopy(rend, line_tex, NULL, &line);
+	}else{
+    	local_RenderCopy(rend, line, line_color_array);
+	}
 
 	if(door_move)
 		door.y -= delta_door_move;
@@ -333,7 +420,7 @@ void render_present(SDL_Renderer* rend){
 	
 	if(door.y + door.h > window_height)
 		door_move = true;
-	if(door.y < line.y + line.h / 2)
+	if(door.y < line.y + line.h + delta_door_move)
 		door_move = false;
 
 	SDL_RenderCopy(rend, door_tex, NULL, &door);
@@ -361,6 +448,11 @@ void render_present(SDL_Renderer* rend){
     	SDL_RenderCopy(rend, move_type_tex[i + (move_mod == i/2 ? 1 : 0)], NULL, &move_type[i + (move_mod == i/2 ? 1 : 0)]);
         
    	SDL_RenderPresent(rend);
+
+
+	test_t = true;
+
+
 }
 
 
