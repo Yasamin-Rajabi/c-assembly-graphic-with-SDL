@@ -14,6 +14,8 @@ const double PI_DEGREE = 180;
 const int window_width = 1200;
 const int window_height = 800;
 
+bool asm_mode = true;
+
 bool door_move = true; // true -> up false -> down
 int delta_door_move = 10;
 int goal_display;
@@ -34,11 +36,11 @@ SDL_Surface* ball_surface;
 
 SDL_Rect line;
 SDL_Texture* line_tex;
-SDL_Surface* line_surface;
 Uint8* line_color_array;
 
 SDL_Rect door;
 SDL_Texture* door_tex;
+Uint8* door_color_array;
 
 SDL_Rect goal;
 SDL_Texture* goal_tex;
@@ -48,24 +50,31 @@ SDL_Texture* Speed_number_tex;
 
 SDL_Rect Speed_layer;
 SDL_Texture* Speed_layer_tex;
+Uint8* Speed_layer_color_array;
 
 SDL_Rect ISpeed;
 SDL_Texture* ISpeed_tex;
+Uint8* ISpeed_color_array;
 
 SDL_Rect DSpeed;
 SDL_Texture* DSpeed_tex;
+Uint8* DSpeed_color_array;
 
 SDL_Rect Degree_number;
 SDL_Texture* Degree_number_tex;
 
+
 SDL_Rect Degree_layer;
 SDL_Texture* Degree_layer_tex;
+Uint8* Degree_layer_color_array;
 
 SDL_Rect IDegree;
 SDL_Texture* IDegree_tex;
+Uint8* IDegree_color_array;
 
 SDL_Rect DDegree;
 SDL_Texture* DDegree_tex;
+Uint8* DDegree_color_array;
 
 SDL_Texture* move_type_tex[6];
 SDL_Rect move_type[6];
@@ -128,15 +137,6 @@ void create_line(SDL_Renderer* rend){
     line.y = 100;
 
 	line_color_array = (Uint8*) malloc(4 * line.w * line.h * sizeof(Uint8));
-
-	SDL_Surface* surface1 = SDL_CreateRGBSurfaceWithFormat(0, line.w, line.h, 32, format);
-
-    if (SDL_RenderReadPixels(rend, &line, format, surface1->pixels, surface1->pitch) != 0){
-        SDL_Log("SDL_RenderReadPixels failed: %s", SDL_GetError());
-    }else{
-        SDL_SaveBMP(surface, "screenshot1.bmp");
-    }
-
 }
 
 void create_door(SDL_Renderer* rend){
@@ -152,6 +152,8 @@ void create_door(SDL_Renderer* rend){
 
     door.x = window_width - door.w / 2 - 20;
     door.y = (window_height - door.h) / 2;
+
+	door_color_array = (Uint8*) malloc(4 * line.w * line.h * sizeof(Uint8));
 }
 
 void create_goal(SDL_Renderer* rend){
@@ -181,6 +183,8 @@ void create_ISpeed(SDL_Renderer* rend){
     ISpeed.h /= 4;
     ISpeed.x = 1.5 * move_type[0].w;
     ISpeed.y = 10 + ISpeed.h/2;
+
+	ISpeed_color_array = (Uint8*) malloc(4 * line.w * line.h * sizeof(Uint8));
 }
 
 void create_DSpeed(SDL_Renderer* rend){
@@ -194,6 +198,8 @@ void create_DSpeed(SDL_Renderer* rend){
     DSpeed.h /= 4;
     DSpeed.x = 1.5 * move_type[0].w;
     DSpeed.y = ISpeed.y + ISpeed.h;
+
+	DSpeed_color_array = (Uint8*) malloc(4 * line.w * line.h * sizeof(Uint8));
 }
 
 void create_Speed_layer(SDL_Renderer* rend){
@@ -207,6 +213,8 @@ void create_Speed_layer(SDL_Renderer* rend){
     Speed_layer.h /= 6;
     Speed_layer.x = ISpeed.x + ISpeed.w;
     Speed_layer.y = 40;
+
+	Speed_layer_color_array = (Uint8*) malloc(4 * line.w * line.h * sizeof(Uint8));
 }
 
 
@@ -221,6 +229,8 @@ void create_IDegree(SDL_Renderer* rend){
     IDegree.h /= 4;
     IDegree.x = 80 + Speed_layer.x + Speed_layer.w;
     IDegree.y = 10 + IDegree.h/2;
+
+	IDegree_color_array = (Uint8*) malloc(4 * line.w * line.h * sizeof(Uint8));
 }
 
 void create_DDegree(SDL_Renderer* rend){
@@ -234,6 +244,8 @@ void create_DDegree(SDL_Renderer* rend){
     DDegree.h /= 4;
     DDegree.x = 80 + Speed_layer.x + Speed_layer.w;
     DDegree.y = IDegree.y + IDegree.h;
+
+	DDegree_color_array = (Uint8*) malloc(4 * line.w * line.h * sizeof(Uint8));
 }
 
 void create_Degree_layer(SDL_Renderer* rend){
@@ -247,6 +259,8 @@ void create_Degree_layer(SDL_Renderer* rend){
     Degree_layer.h /= 6;
     Degree_layer.x = IDegree.x + IDegree.w;
     Degree_layer.y = 40;
+
+	Degree_layer_color_array = (Uint8*) malloc(4 * line.w * line.h * sizeof(Uint8));
 }
 
 void create_move_type_layers(SDL_Renderer* rend){
@@ -338,16 +352,16 @@ const int BytesPerPixel = 4;
 
 void get_color_array(SDL_Renderer* rend, SDL_Rect* rect, Uint8* color_array){
 
-	SDL_Surface* surface = SDL_CreateRGBSurfaceWithFormat(0, line.w, line.h, 32, format);
+	SDL_Surface* surface = SDL_CreateRGBSurfaceWithFormat(0, rect->w, rect->h, 32, format);
 
-    if (SDL_RenderReadPixels(rend, &line, format, surface->pixels, surface->pitch) != 0){
+    if (SDL_RenderReadPixels(rend, rect, format, surface->pixels, surface->pitch) != 0){
     	SDL_Log("SDL_RenderReadPixels failed: %s", SDL_GetError());
     }else{
         SDL_SaveBMP(surface, "screenshot2.bmp");
 	}
 
-	for(int x = 0; x < line.w; x++)
-		for(int y = 0; y < line.h; y++){
+	for(int x = 0; x < rect->w; x++)
+		for(int y = 0; y < rect->h; y++){
 
 			Uint8* pixel_base = static_cast<Uint8*>(surface->pixels);
             Uint8* pixel_address = pixel_base + (y * surface->pitch) + (x * BytesPerPixel);
@@ -356,24 +370,24 @@ void get_color_array(SDL_Renderer* rend, SDL_Rect* rect, Uint8* color_array){
             Uint32 pixel_value;
             memcpy(&pixel_value, pixel_ptr, surface -> format -> BytesPerPixel);
 			
-			SDL_GetRGBA(pixel_value, surface->format,   &color_array[BytesPerPixel * (y * line.w + x)],      //R
-														&color_array[BytesPerPixel * (y * line.w + x) + 1],  //G
-														&color_array[BytesPerPixel * (y * line.w + x) + 2],  //B
-														&color_array[BytesPerPixel * (y * line.w + x) + 3]); //A
+			SDL_GetRGBA(pixel_value, surface->format,   &color_array[BytesPerPixel * ((y * rect->w) + x)],      //R
+														&color_array[BytesPerPixel * ((y * rect->w + x)) + 1],  //G
+														&color_array[BytesPerPixel * ((y * rect->w + x)) + 2],  //B
+														&color_array[BytesPerPixel * ((y * rect->w + x)) + 3]); //A
 		}
 	
 }
 
 
-void local_RenderCopy(SDL_Renderer* rend, SDL_Rect rect, Uint8* color_array){
+void local_RenderCopy(SDL_Renderer* rend, SDL_Rect* rect, Uint8* color_array){
     // Draw a point at coordinate (100, 100)
-	for(int i = rect.x, x = 0; i < rect.x + rect.w; i++, x++)
-		for(int j = rect.y, y = 0; j < rect.y + rect.h; j++, y++){
+	for(int i = rect->x, x = 0; i < rect->x + rect->w; i += 5, x += 5)
+		for(int j = rect->y, y = 0; j < rect->y + rect->h; j += 5, y += 5){
 
-			Uint8 r = color_array[BytesPerPixel * (y * rect.w + x)];
-			Uint8 g = color_array[BytesPerPixel * (y * rect.w + x) + 1];
-			Uint8 b = color_array[BytesPerPixel * (y * rect.w + x) + 2];
-			Uint8 a = color_array[BytesPerPixel * (y * rect.w + x) + 3];
+			Uint8 r = color_array[BytesPerPixel * (y * rect->w + x)];
+			Uint8 g = color_array[BytesPerPixel * (y * rect->w + x) + 1];
+			Uint8 b = color_array[BytesPerPixel * (y * rect->w + x) + 2];
+			Uint8 a = color_array[BytesPerPixel * (y * rect->w + x) + 3];
 
     		// Extract RGBA components
 			SDL_SetRenderDrawColor(rend, r, g, b, a); // r g b a
@@ -387,31 +401,41 @@ void local_RenderCopy(SDL_Renderer* rend, SDL_Rect rect, Uint8* color_array){
 
 }
 
-void display_object(SDL_Renderer* rend, SDL_Texture* texture, SDL_Rect rect, Uint8* color_array){
-	//if(!asm_mod)
-	//	SDL_RenderCopy(rend, texture, Null, &rect);
-	//else
-	//	local_RenderCopy(rend, rect, color_array);
+bool render_present_once = false;
+bool render_present_twice = false;
+
+void display_object(SDL_Renderer* rend, SDL_Texture* texture, SDL_Rect* rect, Uint8* color_array){
+	if(!asm_mode or !render_present_once)
+		SDL_RenderCopy(rend, texture, NULL, rect);
+	else
+		local_RenderCopy(rend, rect, color_array);
 }
 
-bool test_t = false;
 
 SDL_Point ball_center = {ball.w / 2, ball.h / 2};
 
 void render_present(SDL_Renderer* rend){
-	if(test_t)
+
+	if(render_present_once and !render_present_twice){
 		get_color_array(rend, &line, line_color_array);
+		get_color_array(rend, &door, door_color_array);
+
+		get_color_array(rend, &ISpeed, ISpeed_color_array);
+		get_color_array(rend, &DSpeed, DSpeed_color_array);
+		get_color_array(rend, &Speed_layer, Speed_layer_color_array);
+
+		get_color_array(rend, &IDegree, IDegree_color_array);
+        get_color_array(rend, &DDegree, DDegree_color_array);
+        get_color_array(rend, &Degree_layer, Degree_layer_color_array);
+	}
+
 
 	// clears the screen
     SDL_RenderClear(rend);
 
 	SDL_RenderCopyEx(rend, ball_tex, NULL, &ball, angle, &ball_center, SDL_FLIP_NONE);
 
-	if(!test_t){
-		SDL_RenderCopy(rend, line_tex, NULL, &line);
-	}else{
-    	local_RenderCopy(rend, line, line_color_array);
-	}
+	display_object(rend, line_tex, &line, line_color_array);
 
 	if(door_move)
 		door.y -= delta_door_move;
@@ -423,12 +447,16 @@ void render_present(SDL_Renderer* rend){
 	if(door.y < line.y + line.h + delta_door_move)
 		door_move = false;
 
-	SDL_RenderCopy(rend, door_tex, NULL, &door);
+	display_object(rend, door_tex, &door, door_color_array);
 
 	if(goal_display > 0){
 		SDL_RenderCopy(rend, goal_tex, NULL, &goal);
 		goal_display--;
 	}
+
+	//display_object(rend, ISpeed_tex, &ISpeed, ISpeed_color_array);
+	//display_object(rend, DSpeed_tex, &DSpeed, DSpeed_color_array);
+	//display_object(rend, Speed_layer_tex, &Speed_layer, Speed_layer_color_array);
 
     SDL_RenderCopy(rend, ISpeed_tex, NULL, &ISpeed);
     SDL_RenderCopy(rend, DSpeed_tex, NULL, &DSpeed);
@@ -437,9 +465,13 @@ void render_present(SDL_Renderer* rend){
 	create_Speed_number(rend);
 	SDL_RenderCopy(rend, Speed_number_tex, NULL, &Speed_number);
 
-	SDL_RenderCopy(rend, IDegree_tex, NULL, &IDegree);
-    SDL_RenderCopy(rend, DDegree_tex, NULL, &DDegree);
-	SDL_RenderCopy(rend, Degree_layer_tex, NULL, &Degree_layer);
+	//SDL_RenderCopy(rend, IDegree_tex, NULL, &IDegree);
+    //SDL_RenderCopy(rend, DDegree_tex, NULL, &DDegree);
+	//SDL_RenderCopy(rend, Degree_layer_tex, NULL, &Degree_layer);
+	
+	display_object(rend, IDegree_tex, &IDegree, IDegree_color_array);
+	display_object(rend, DDegree_tex, &DDegree, DDegree_color_array);
+	display_object(rend, Degree_layer_tex, &Degree_layer, Degree_layer_color_array);
 
 	create_Degree_number(rend);
 	SDL_RenderCopy(rend, Degree_number_tex, NULL, &Degree_number);
@@ -449,8 +481,10 @@ void render_present(SDL_Renderer* rend){
         
    	SDL_RenderPresent(rend);
 
+	if(render_present_once)
+		render_present_twice = true;
 
-	test_t = true;
+	render_present_once = true;
 
 
 }
@@ -480,6 +514,10 @@ void quit_game(SDL_Window* win, SDL_Renderer* rend){
 	TTF_Quit();
 }
 
+void set_asm_mode(bool x){
+	asm_mode = x;
+}
+
 void set_degree0(int x){
 	degree0 = x;
 }
@@ -502,7 +540,7 @@ double getY(double degree, double length, double y0){
     return y0 + (sin(getRadians(degree)) * length);
 }
 
-bool shoot_ball(bool asm_mode){
+bool shoot_ball(){
 
 	// check hit
     if (ball.x + ball.w > window_width or ball.x < 0 or ball.y + ball.h > window_height or ball.y < line.y + line.h/2){

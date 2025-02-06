@@ -1,6 +1,3 @@
-yasamin@yasamin:~/sharif/sakhtar zaban/project$ vim test_compile_command.txt
-yasamin@yasamin:~/sharif/sakhtar zaban/project$ vim game_compile_command.txt 
-yasamin@yasamin:~/sharif/sakhtar zaban/project$ cat main.cpp 
 #include <bits/stdc++.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
@@ -39,28 +36,30 @@ int main(int argc, char *argv[])
 	set_degree0(degree0);
 	set_move_variables(move_mod, speed, degree);
 
+	set_asm_mode(0);
 	auto t1 = std::chrono::high_resolution_clock::now();
 
-	for(int i = 1;i <= 5;i++){
-		while(!shoot_ball(0)){
+	for(int i = 1;i <= 40;i++){
+		while(!shoot_ball()){
 			render_present(rend);
-	        SDL_Delay(10);
+	        SDL_Delay(1);
 		}
 
 		render_present(rend);
-        SDL_Delay(10);
+        SDL_Delay(1);
 	}
 
+	set_asm_mode(1);
 	auto t2 = std::chrono::high_resolution_clock::now();
 
-	for(int i = 1;i <= 5;i++){
-        while(!shoot_ball(1)){
+	for(int i = 1;i <= 40;i++){
+        while(!shoot_ball()){
             render_present(rend);
-            SDL_Delay(10);
+            SDL_Delay(1);
         }
 
         render_present(rend);
-        SDL_Delay(10);
+        SDL_Delay(1);
     }
 
 	auto t3 = std::chrono::high_resolution_clock::now();
@@ -68,7 +67,7 @@ int main(int argc, char *argv[])
 	double delta_time1 = std::chrono::duration<double, std::milli>(t2-t1).count();
 	double delta_time2 = std::chrono::duration<double, std::milli>(t3-t2).count();
 
-	printf("normal time = %lf\n assembly time = %lf\n", delta_time1, delta_time2);
+	printf("normal time = %lf\nassembly time = %lf\n", delta_time1, delta_time2);
 
 	quit_game(win, rend);
 	return 0;
