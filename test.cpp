@@ -36,8 +36,9 @@ int main(int argc, char *argv[])
 	set_degree0(degree0);
 	set_move_variables(move_mod, speed, degree);
 
-	set_asm_mode(0);
+	
 	auto t1 = std::chrono::high_resolution_clock::now();
+	set_asm_mode(0);
 
 	for(int i = 1;i <= 40;i++){
 		while(!shoot_ball()){

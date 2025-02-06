@@ -37,10 +37,12 @@ SDL_Surface* ball_surface;
 SDL_Rect line;
 SDL_Texture* line_tex;
 Uint8* line_color_array;
+bool* line_exist;
 
 SDL_Rect door;
 SDL_Texture* door_tex;
 Uint8* door_color_array;
+bool* door_exist;
 
 SDL_Rect goal;
 SDL_Texture* goal_tex;
@@ -51,14 +53,17 @@ SDL_Texture* Speed_number_tex;
 SDL_Rect Speed_layer;
 SDL_Texture* Speed_layer_tex;
 Uint8* Speed_layer_color_array;
+bool* Speed_layer_exist;
 
 SDL_Rect ISpeed;
 SDL_Texture* ISpeed_tex;
 Uint8* ISpeed_color_array;
+bool* ISpeed_exist;
 
 SDL_Rect DSpeed;
 SDL_Texture* DSpeed_tex;
 Uint8* DSpeed_color_array;
+bool* DSpeed_exist;
 
 SDL_Rect Degree_number;
 SDL_Texture* Degree_number_tex;
@@ -137,12 +142,12 @@ void create_line(SDL_Renderer* rend){
     line.y = 100;
 
 	line_color_array = (Uint8*) malloc(4 * line.w * line.h * sizeof(Uint8));
+	line_exist = (bool*) calloc(line.w * line.h , sizeof(bool));
 }
 
 void create_door(SDL_Renderer* rend){
 
     SDL_Surface* door_surface = IMG_Load("pictures/door.png");
-	
     door_tex = SDL_CreateTextureFromSurface(rend, door_surface);
     SDL_FreeSurface(door_surface);
     SDL_QueryTexture(door_tex, NULL, NULL, &door.w, &door.h);
@@ -154,6 +159,8 @@ void create_door(SDL_Renderer* rend){
     door.y = (window_height - door.h) / 2;
 
 	door_color_array = (Uint8*) malloc(4 * line.w * line.h * sizeof(Uint8));
+	door_exist = (bool*) calloc(line.w * line.h , sizeof(bool));
+
 }
 
 void create_goal(SDL_Renderer* rend){
@@ -184,7 +191,8 @@ void create_ISpeed(SDL_Renderer* rend){
     ISpeed.x = 1.5 * move_type[0].w;
     ISpeed.y = 10 + ISpeed.h/2;
 
-	ISpeed_color_array = (Uint8*) malloc(4 * line.w * line.h * sizeof(Uint8));
+	ISpeed_color_array = (Uint8*) malloc(4 * ISpeed.w * ISpeed.h * sizeof(Uint8));
+	ISpeed_exist = (bool*) calloc(ISpeed.w * ISpeed.h , sizeof(bool));
 }
 
 void create_DSpeed(SDL_Renderer* rend){
@@ -199,7 +207,8 @@ void create_DSpeed(SDL_Renderer* rend){
     DSpeed.x = 1.5 * move_type[0].w;
     DSpeed.y = ISpeed.y + ISpeed.h;
 
-	DSpeed_color_array = (Uint8*) malloc(4 * line.w * line.h * sizeof(Uint8));
+	DSpeed_color_array = (Uint8*) malloc(4 * DSpeed.w * DSpeed.h * sizeof(Uint8));
+	DSpeed_exist = (bool*) calloc(DSpeed.w * DSpeed.h , sizeof(bool));
 }
 
 void create_Speed_layer(SDL_Renderer* rend){
@@ -214,7 +223,8 @@ void create_Speed_layer(SDL_Renderer* rend){
     Speed_layer.x = ISpeed.x + ISpeed.w;
     Speed_layer.y = 40;
 
-	Speed_layer_color_array = (Uint8*) malloc(4 * line.w * line.h * sizeof(Uint8));
+	Speed_layer_color_array = (Uint8*) malloc(4 * Speed_layer.w * Speed_layer.h * sizeof(Uint8));
+	Speed_layer_exist = (bool*) calloc(Speed_layer.w * Speed_layer.h , sizeof(bool));
 }
 
 
@@ -350,7 +360,7 @@ void create_objects(SDL_Renderer* rend){
 const int BytesPerPixel = 4;
 
 
-void get_color_array(SDL_Renderer* rend, SDL_Rect* rect, Uint8* color_array){
+void get_color_array(SDL_Renderer* rend, SDL_Rect* rect, Uint8* color_array, bool* exist){
 
 	SDL_Surface* surface = SDL_CreateRGBSurfaceWithFormat(0, rect->w, rect->h, 32, format);
 
@@ -370,29 +380,36 @@ void get_color_array(SDL_Renderer* rend, SDL_Rect* rect, Uint8* color_array){
             Uint32 pixel_value;
             memcpy(&pixel_value, pixel_ptr, surface -> format -> BytesPerPixel);
 			
+
 			SDL_GetRGBA(pixel_value, surface->format,   &color_array[BytesPerPixel * ((y * rect->w) + x)],      //R
 														&color_array[BytesPerPixel * ((y * rect->w + x)) + 1],  //G
 														&color_array[BytesPerPixel * ((y * rect->w + x)) + 2],  //B
 														&color_array[BytesPerPixel * ((y * rect->w + x)) + 3]); //A
+
+			if(color_array[4 * (y * rect -> w + x)] != 0 or color_array[4 * (y * rect -> w + x) + 1] != 0 or color_array[4 * (y * rect -> w + x) + 2] != 0)
+				exist[y * rect -> w + x] = true;
 		}
 	
 }
 
 
-void local_RenderCopy(SDL_Renderer* rend, SDL_Rect* rect, Uint8* color_array){
-    // Draw a point at coordinate (100, 100)
-	for(int i = rect->x, x = 0; i < rect->x + rect->w; i += 5, x += 5)
-		for(int j = rect->y, y = 0; j < rect->y + rect->h; j += 5, y += 5){
+void local_RenderCopy(SDL_Renderer* rend, SDL_Rect* rect, Uint8* color_array, bool* exist){
 
-			Uint8 r = color_array[BytesPerPixel * (y * rect->w + x)];
-			Uint8 g = color_array[BytesPerPixel * (y * rect->w + x) + 1];
-			Uint8 b = color_array[BytesPerPixel * (y * rect->w + x) + 2];
-			Uint8 a = color_array[BytesPerPixel * (y * rect->w + x) + 3];
+	SDL_SetRenderDrawColor(rend, 0, 0, 255, 255); // r g b a
+    
+	for(int i = rect->x, x = 0; i < rect->x + rect->w; i += 3, x += 3)
+		for(int j = rect->y, y = 0; j < rect->y + rect->h; j += 3, y += 3){
+
+			//Uint8 r = color_array[BytesPerPixel * (y * rect->w + x)];
+			//Uint8 g = color_array[BytesPerPixel * (y * rect->w + x) + 1];
+			//Uint8 b = color_array[BytesPerPixel * (y * rect->w + x) + 2];
+			//Uint8 a = color_array[BytesPerPixel * (y * rect->w + x) + 3];
 
     		// Extract RGBA components
-			SDL_SetRenderDrawColor(rend, r, g, b, a); // r g b a
+			//SDL_SetRenderDrawColor(rend, r, g, b, a); // r g b a
 
-			if((r && r != 0) or (g && g != 0) or (b && b != 0))
+			//if((r && r != 0) or (g && g != 0) or (b && b != 0))
+			if(exist[y * rect->w + x])
     			SDL_RenderDrawPoint(rend, i, j);
 			
 		}
@@ -404,11 +421,11 @@ void local_RenderCopy(SDL_Renderer* rend, SDL_Rect* rect, Uint8* color_array){
 bool render_present_once = false;
 bool render_present_twice = false;
 
-void display_object(SDL_Renderer* rend, SDL_Texture* texture, SDL_Rect* rect, Uint8* color_array){
+void display_object(SDL_Renderer* rend, SDL_Texture* texture, SDL_Rect* rect, Uint8* color_array, bool* exist){
 	if(!asm_mode or !render_present_once)
 		SDL_RenderCopy(rend, texture, NULL, rect);
 	else
-		local_RenderCopy(rend, rect, color_array);
+		local_RenderCopy(rend, rect, color_array, exist);
 }
 
 
@@ -417,16 +434,16 @@ SDL_Point ball_center = {ball.w / 2, ball.h / 2};
 void render_present(SDL_Renderer* rend){
 
 	if(render_present_once and !render_present_twice){
-		get_color_array(rend, &line, line_color_array);
-		get_color_array(rend, &door, door_color_array);
+		get_color_array(rend, &line, line_color_array, line_exist);
+		get_color_array(rend, &door, door_color_array, door_exist);
 
-		get_color_array(rend, &ISpeed, ISpeed_color_array);
-		get_color_array(rend, &DSpeed, DSpeed_color_array);
-		get_color_array(rend, &Speed_layer, Speed_layer_color_array);
+		get_color_array(rend, &ISpeed, ISpeed_color_array, ISpeed_exist);
+		get_color_array(rend, &DSpeed, DSpeed_color_array, DSpeed_exist);
+		get_color_array(rend, &Speed_layer, Speed_layer_color_array, Speed_layer_exist);
 
-		get_color_array(rend, &IDegree, IDegree_color_array);
-        get_color_array(rend, &DDegree, DDegree_color_array);
-        get_color_array(rend, &Degree_layer, Degree_layer_color_array);
+		//get_color_array(rend, &IDegree, IDegree_color_array);
+        //get_color_array(rend, &DDegree, DDegree_color_array);
+        //get_color_array(rend, &Degree_layer, Degree_layer_color_array);
 	}
 
 
@@ -435,7 +452,7 @@ void render_present(SDL_Renderer* rend){
 
 	SDL_RenderCopyEx(rend, ball_tex, NULL, &ball, angle, &ball_center, SDL_FLIP_NONE);
 
-	display_object(rend, line_tex, &line, line_color_array);
+	display_object(rend, line_tex, &line, line_color_array, line_exist);
 
 	if(door_move)
 		door.y -= delta_door_move;
@@ -447,16 +464,17 @@ void render_present(SDL_Renderer* rend){
 	if(door.y < line.y + line.h + delta_door_move)
 		door_move = false;
 
-	display_object(rend, door_tex, &door, door_color_array);
+	display_object(rend, door_tex, &door, door_color_array, door_exist);
+	//SDL_RenderCopy(rend, door_tex, NULL, &door);
 
 	if(goal_display > 0){
 		SDL_RenderCopy(rend, goal_tex, NULL, &goal);
 		goal_display--;
 	}
 
-	//display_object(rend, ISpeed_tex, &ISpeed, ISpeed_color_array);
-	//display_object(rend, DSpeed_tex, &DSpeed, DSpeed_color_array);
-	//display_object(rend, Speed_layer_tex, &Speed_layer, Speed_layer_color_array);
+	//display_object(rend, ISpeed_tex, &ISpeed, ISpeed_color_array, ISpeed_exist);
+	//display_object(rend, DSpeed_tex, &DSpeed, DSpeed_color_array, DSpeed_exist);
+	//display_object(rend, Speed_layer_tex, &Speed_layer, Speed_layer_color_array, Speed_layer_exist);
 
     SDL_RenderCopy(rend, ISpeed_tex, NULL, &ISpeed);
     SDL_RenderCopy(rend, DSpeed_tex, NULL, &DSpeed);
@@ -465,13 +483,13 @@ void render_present(SDL_Renderer* rend){
 	create_Speed_number(rend);
 	SDL_RenderCopy(rend, Speed_number_tex, NULL, &Speed_number);
 
-	//SDL_RenderCopy(rend, IDegree_tex, NULL, &IDegree);
-    //SDL_RenderCopy(rend, DDegree_tex, NULL, &DDegree);
-	//SDL_RenderCopy(rend, Degree_layer_tex, NULL, &Degree_layer);
+	SDL_RenderCopy(rend, IDegree_tex, NULL, &IDegree);
+    SDL_RenderCopy(rend, DDegree_tex, NULL, &DDegree);
+	SDL_RenderCopy(rend, Degree_layer_tex, NULL, &Degree_layer);
 	
-	display_object(rend, IDegree_tex, &IDegree, IDegree_color_array);
-	display_object(rend, DDegree_tex, &DDegree, DDegree_color_array);
-	display_object(rend, Degree_layer_tex, &Degree_layer, Degree_layer_color_array);
+	//display_object(rend, IDegree_tex, &IDegree, IDegree_color_array);
+	//display_object(rend, DDegree_tex, &DDegree, DDegree_color_array);
+	//display_object(rend, Degree_layer_tex, &Degree_layer, Degree_layer_color_array);
 
 	create_Degree_number(rend);
 	SDL_RenderCopy(rend, Degree_number_tex, NULL, &Degree_number);
