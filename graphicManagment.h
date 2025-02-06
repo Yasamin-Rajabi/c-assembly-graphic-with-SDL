@@ -13,8 +13,7 @@ void quit_game(SDL_Window*, SDL_Renderer*);
 
 void set_move_variables(int, int, int);
 void set_degree0(int);
-void set_asm_mode(bool);
-bool shoot_ball();
+bool shoot_ball(bool);
 
 #endif
 
