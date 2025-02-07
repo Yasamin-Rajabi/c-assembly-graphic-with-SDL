@@ -30,12 +30,12 @@ int main(int argc, char *argv[])
 
 	int move_mod = 0; //0 simple //1 mohadab //2 sinosi
 	int speed = 35;
-	int degree0 = 6;
+	int degree0 = 45;
 	int degree = degree0;
 
 	set_degree0(degree0);
 	set_move_variables(move_mod, speed, degree);
-
+	set_asm_mode(false);
 
 	SDL_Event event;
 	while (!close) {
@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
 		}
 
 		if(shoot){
-			if(shoot_ball(0))
+			if(shoot_ball())
 				shoot = false, degree = degree0;
 		}
 		
