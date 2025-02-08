@@ -42,12 +42,10 @@ SDL_Surface* ball_surface;
 
 SDL_Rect line;
 SDL_Texture* line_tex;
-Uint8* line_color_array;
 int* line_exist_color;
 
 SDL_Rect door;
 SDL_Texture* door_tex;
-Uint8* door_color_array;
 int* door_exist_color;
 
 SDL_Rect goal;
@@ -58,15 +56,15 @@ SDL_Texture* Speed_number_tex;
 
 SDL_Rect Speed_layer;
 SDL_Texture* Speed_layer_tex;
-Uint8* Speed_layer_color_array;
+int* Speed_layer_exist_color;
 
 SDL_Rect ISpeed;
 SDL_Texture* ISpeed_tex;
-Uint8* ISpeed_color_array;
+int* ISpeed_exist_color;
 
 SDL_Rect DSpeed;
 SDL_Texture* DSpeed_tex;
-Uint8* DSpeed_color_array;
+int* DSpeed_exist_color;
 
 SDL_Rect Degree_number;
 SDL_Texture* Degree_number_tex;
@@ -74,15 +72,15 @@ SDL_Texture* Degree_number_tex;
 
 SDL_Rect Degree_layer;
 SDL_Texture* Degree_layer_tex;
-Uint8* Degree_layer_color_array;
+int* Degree_layer_exist_color;
 
 SDL_Rect IDegree;
 SDL_Texture* IDegree_tex;
-Uint8* IDegree_color_array;
+int* IDegree_exist_color;
 
 SDL_Rect DDegree;
 SDL_Texture* DDegree_tex;
-Uint8* DDegree_color_array;
+int* DDegree_exist_color;
 
 SDL_Texture* move_type_tex[6];
 SDL_Rect move_type[6];
@@ -144,7 +142,6 @@ void create_line(SDL_Renderer* rend){
     line.x = 0;
     line.y = 100;
 
-	line_color_array = (Uint8*) malloc(4 * line.w * line.h * sizeof(Uint8));
 	line_exist_color = (int*) calloc(line.w * line.h , sizeof(int));
 }
 
@@ -162,7 +159,6 @@ void create_door(SDL_Renderer* rend){
     door.x = window_width - door.w / 2 - 20;
     door.y = (window_height - door.h) / 2;
 
-	door_color_array = (Uint8*) malloc(4 * door.w * door.h * sizeof(Uint8));
 	door_exist_color = (int*) calloc(door.w * door.h , sizeof(int));
 
 }
@@ -195,7 +191,6 @@ void create_ISpeed(SDL_Renderer* rend){
     ISpeed.x = 1.5 * move_type[0].w;
     ISpeed.y = 10 + ISpeed.h/2;
 
-	ISpeed_color_array = (Uint8*) malloc(4 * ISpeed.w * ISpeed.h * sizeof(Uint8));
 	ISpeed_exist_color = (int*) calloc(ISpeed.w * ISpeed.h , sizeof(int));
 }
 
@@ -210,8 +205,8 @@ void create_DSpeed(SDL_Renderer* rend){
     DSpeed.h /= 4;
     DSpeed.x = 1.5 * move_type[0].w;
     DSpeed.y = ISpeed.y + ISpeed.h;
-
-	DSpeed_color_array = (Uint8*) malloc(4 * line.w * line.h * sizeof(Uint8));
+	
+	DSpeed_exist_color = (int*) calloc(DSpeed.w * DSpeed.h , sizeof(int));
 }
 
 void create_Speed_layer(SDL_Renderer* rend){
@@ -225,8 +220,8 @@ void create_Speed_layer(SDL_Renderer* rend){
     Speed_layer.h /= 6;
     Speed_layer.x = ISpeed.x + ISpeed.w;
     Speed_layer.y = 40;
-
-	Speed_layer_color_array = (Uint8*) malloc(4 * line.w * line.h * sizeof(Uint8));
+	
+	Speed_layer_exist_color = (int*) calloc(Speed_layer.w * Speed_layer.h , sizeof(int));
 }
 
 
@@ -242,7 +237,7 @@ void create_IDegree(SDL_Renderer* rend){
     IDegree.x = 80 + Speed_layer.x + Speed_layer.w;
     IDegree.y = 10 + IDegree.h/2;
 
-	IDegree_color_array = (Uint8*) malloc(4 * line.w * line.h * sizeof(Uint8));
+	IDegree_exist_color = (int*) calloc(IDegree.w * IDegree.h , sizeof(int));
 }
 
 void create_DDegree(SDL_Renderer* rend){
@@ -257,7 +252,7 @@ void create_DDegree(SDL_Renderer* rend){
     DDegree.x = 80 + Speed_layer.x + Speed_layer.w;
     DDegree.y = IDegree.y + IDegree.h;
 
-	DDegree_color_array = (Uint8*) malloc(4 * line.w * line.h * sizeof(Uint8));
+	DDegree_exist_color = (int*) calloc(DDegree.w * DDegree.h , sizeof(int));
 }
 
 void create_Degree_layer(SDL_Renderer* rend){
@@ -272,7 +267,7 @@ void create_Degree_layer(SDL_Renderer* rend){
     Degree_layer.x = IDegree.x + IDegree.w;
     Degree_layer.y = 40;
 
-	Degree_layer_color_array = (Uint8*) malloc(4 * line.w * line.h * sizeof(Uint8));
+	Degree_layer_exist_color = (int*) calloc(Degree_layer.w * Degree_layer.h , sizeof(int));
 }
 
 void create_move_type_layers(SDL_Renderer* rend){
@@ -457,13 +452,13 @@ void render_present(SDL_Renderer* rend){
 		get_color_array(rend, &line, line_exist_color);
 		get_color_array(rend, &door, door_exist_color);
 
-		//get_color_array(rend, &ISpeed, ISpeed_color_array);
-		//get_color_array(rend, &DSpeed, DSpeed_color_array);
-		//get_color_array(rend, &Speed_layer, Speed_layer_color_array);
+		get_color_array(rend, &ISpeed, ISpeed_exist_color);
+		get_color_array(rend, &DSpeed, DSpeed_exist_color);
+		get_color_array(rend, &Speed_layer, Speed_layer_exist_color);
 
-		//get_color_array(rend, &IDegree, IDegree_color_array);
-        //get_color_array(rend, &DDegree, DDegree_color_array);
-        //get_color_array(rend, &Degree_layer, Degree_layer_color_array);
+		get_color_array(rend, &IDegree, IDegree_exist_color);
+        get_color_array(rend, &DDegree, DDegree_exist_color);
+        get_color_array(rend, &Degree_layer, Degree_layer_exist_color);
 	}
 
 
@@ -472,8 +467,8 @@ void render_present(SDL_Renderer* rend){
 
 	SDL_RenderCopyEx(rend, ball_tex, NULL, &ball, angle, &ball_center, SDL_FLIP_NONE);
 
-	SDL_RenderCopy(rend, line_tex, NULL, &line);
-	//display_object(rend, line_tex, &line, line_exist_color);
+	//SDL_RenderCopy(rend, line_tex, NULL, &line);
+	display_object(rend, line_tex, &line, line_exist_color);
 
 	if(door_move)
 		door.y -= delta_door_move;
@@ -485,32 +480,32 @@ void render_present(SDL_Renderer* rend){
 	if(door.y < line.y + line.h + delta_door_move)
 		door_move = false;
 
-	SDL_RenderCopy(rend, door_tex, NULL, &door);
-	//display_object(rend, door_tex, &door, door_exist_color);
+	//SDL_RenderCopy(rend, door_tex, NULL, &door);
+	display_object(rend, door_tex, &door, door_exist_color);
 
 	if(goal_display > 0){
 		SDL_RenderCopy(rend, goal_tex, NULL, &goal);
 		goal_display--;
 	}
 
-	//display_object(rend, ISpeed_tex, &ISpeed, ISpeed_color_array);
-	//display_object(rend, DSpeed_tex, &DSpeed, DSpeed_color_array);
-	//display_object(rend, Speed_layer_tex, &Speed_layer, Speed_layer_color_array);
+	display_object(rend, ISpeed_tex, &ISpeed, ISpeed_exist_color);
+	display_object(rend, DSpeed_tex, &DSpeed, DSpeed_exist_color);
+	display_object(rend, Speed_layer_tex, &Speed_layer, Speed_layer_exist_color);
 
-    SDL_RenderCopy(rend, ISpeed_tex, NULL, &ISpeed);
-    SDL_RenderCopy(rend, DSpeed_tex, NULL, &DSpeed);
-	SDL_RenderCopy(rend, Speed_layer_tex, NULL, &Speed_layer);
+    //SDL_RenderCopy(rend, ISpeed_tex, NULL, &ISpeed);
+    //SDL_RenderCopy(rend, DSpeed_tex, NULL, &DSpeed);
+	//SDL_RenderCopy(rend, Speed_layer_tex, NULL, &Speed_layer);
 
 	create_Speed_number(rend);
 	SDL_RenderCopy(rend, Speed_number_tex, NULL, &Speed_number);
 
-	SDL_RenderCopy(rend, IDegree_tex, NULL, &IDegree);
-    SDL_RenderCopy(rend, DDegree_tex, NULL, &DDegree);
-	SDL_RenderCopy(rend, Degree_layer_tex, NULL, &Degree_layer);
+	//SDL_RenderCopy(rend, IDegree_tex, NULL, &IDegree);
+    //SDL_RenderCopy(rend, DDegree_tex, NULL, &DDegree);
+	//SDL_RenderCopy(rend, Degree_layer_tex, NULL, &Degree_layer);
 	
-	//display_object(rend, IDegree_tex, &IDegree, IDegree_color_array);
-	//display_object(rend, DDegree_tex, &DDegree, DDegree_color_array);
-	//display_object(rend, Degree_layer_tex, &Degree_layer, Degree_layer_color_array);
+	display_object(rend, IDegree_tex, &IDegree, IDegree_exist_color);
+	display_object(rend, DDegree_tex, &DDegree, DDegree_exist_color);
+	display_object(rend, Degree_layer_tex, &Degree_layer, Degree_layer_exist_color);
 
 	create_Degree_number(rend);
 	SDL_RenderCopy(rend, Degree_number_tex, NULL, &Degree_number);

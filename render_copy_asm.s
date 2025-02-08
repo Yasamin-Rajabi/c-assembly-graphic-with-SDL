@@ -19,7 +19,7 @@ render_copy_asm:
     ; Initialize x = 0, y = 0 , x = r11, y = r12
     xor r12, r12
     xor r13, r13       
-    mov r15, 8       ; delta = 8
+    mov r15, 32       ; delta = 8
 
 	jmp while_condition
 
